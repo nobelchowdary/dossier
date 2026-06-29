@@ -4,6 +4,10 @@ A white-labeled client portal SaaS platform for freelancers and small agencies.
 Consolidates client management — project tracking, file delivery, invoicing, and
 communication — into a single branded experience.
 
+> **Live Demo**: https://dossier-delta-gold.vercel.app  
+> **Vercel Team ID**: `nobelchm-6842's projects`  
+> **AWS Database**: Amazon RDS PostgreSQL  
+
 ## Stack
 
 - **Framework**: Next.js 15 (App Router) deployed on Vercel
@@ -17,7 +21,74 @@ communication — into a single branded experience.
 - **AI**: Anthropic Claude (project update summaries)
 - **Multi-tenancy**: App-level `organizationId` scoping on all queries
 
-## Architecture
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         VERCEL (Edge)                            │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │              Next.js 15 App Router                         │  │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐   │  │
+│  │  │  Provider    │  │   Client     │  │   API Routes   │   │  │
+│  │  │  Dashboard   │  │   Portal     │  │  (webhooks)    │   │  │
+│  │  └──────┬───────┘  └──────┬───────┘  └───────┬────────┘   │  │
+│  │         │                  │                   │            │  │
+│  │  ┌──────┴──────────────────┴───────────────────┴────────┐  │  │
+│  │  │           Server Actions + Middleware                 │  │  │
+│  │  │        (Auth, Role-routing, Permissions)              │  │  │
+│  │  └──────────────────────┬────────────────────────────────┘  │  │
+│  └─────────────────────────┼─────────────────────────────────┘  │
+└────────────────────────────┼────────────────────────────────────┘
+                             │
+          ┌──────────────────┼──────────────────────┐
+          │                  │                      │
+          ▼                  ▼                      ▼
+┌──────────────────┐ ┌─────────────────┐  ┌─────────────────┐
+│  Amazon RDS      │ │   Amazon S3     │  │   Stripe API    │
+│  PostgreSQL      │ │   (File Store)  │  │   (Payments)    │
+│                  │ │                  │  │                  │
+│  - Organizations │ │  - Deliverables │  │  - Subscriptions │
+│  - Users/Clients │ │  - Uploads      │  │  - Invoices      │
+│  - Projects      │ │  - Signed URLs  │  │  - Webhooks      │
+│  - Milestones    │ │                  │  │                  │
+│  - Deliverables  │ └─────────────────┘  └─────────────────┘
+│  - Invoices      │
+│  - Messages      │          ┌─────────────────┐
+│  - Activity Logs │          │  Anthropic API  │
+└──────────────────┘          │  (Claude)       │
+                              │                  │
+                              │  - AI Summaries  │
+                              │  - Client Updates│
+                              └─────────────────┘
+
+                              ┌─────────────────┐
+                              │   Resend API    │
+                              │   (Email)       │
+                              │                  │
+                              │  - OTP Codes    │
+                              │  - Invitations  │
+                              └─────────────────┘
+```
+
+### How it connects
+
+1. **Vercel** hosts the Next.js app with edge middleware for auth/routing
+2. **Amazon RDS PostgreSQL** stores all application data (15 models) — connected via Prisma ORM
+3. **Amazon S3** handles file uploads/downloads with presigned URLs for security
+4. **Stripe** processes subscription billing and invoice payments via webhooks
+5. **Anthropic Claude** generates AI-powered project summaries from real milestone data
+6. **Resend** sends transactional emails (OTP verification, client portal invitations)
+
+### Data Flow
+
+- Provider signs up → org created in **RDS** → onboarding wizard
+- Provider adds client → stored in **RDS** → invite email via **Resend**
+- Provider uploads deliverable → file to **S3** → metadata to **RDS**
+- Client views portal → auth via **NextAuth** → data from **RDS** → files from **S3**
+- Provider generates update → milestone data from **RDS** → summarized by **Claude**
+- Client pays invoice → **Stripe** processes → webhook updates **RDS**
+
+## Subdomain Routing
 
 Two interfaces share one Next.js deployment:
 
@@ -118,6 +189,15 @@ npx prisma migrate dev --name <name>  # Create and apply migration
 | PRO        | Unlimited projects, custom branding|
 | AGENCY     | Unlimited seats                    |
 | ENTERPRISE | Priority support, white-label      |
+
+## Hackathon Submission
+
+| Requirement | Details |
+|---|---|
+| **AWS Database** | Amazon RDS PostgreSQL |
+| **Vercel Project** | https://dossier-delta-gold.vercel.app |
+| **Vercel Team ID** | nobelchm-6842's projects |
+| **GitHub Repo** | https://github.com/nobelchowdary/dossier |
 
 ## License
 
