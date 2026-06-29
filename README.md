@@ -7,11 +7,11 @@ communication — into a single branded experience.
 ## Stack
 
 - **Framework**: Next.js 15 (App Router) deployed on Vercel
-- **Database**: Amazon Aurora PostgreSQL via Vercel Marketplace
+- **Database**: Amazon RDS PostgreSQL (AWS)
 - **ORM**: Prisma (type-safe, with migrations)
 - **Auth**: NextAuth.js v5 (OTP + Google OAuth + magic link)
 - **UI**: Tailwind CSS + shadcn/ui
-- **File storage**: AWS S3 (presigned upload + signed download)
+- **File storage**: Amazon S3 (presigned upload + signed download)
 - **Email**: Resend (transactional)
 - **Payments**: Stripe (invoicing + subscriptions)
 - **AI**: Anthropic Claude (project update summaries)
@@ -45,7 +45,7 @@ cp .env.example .env
 Fill in the following:
 
 ```env
-# Database
+# Amazon RDS PostgreSQL
 DATABASE_URL=
 
 # Auth
